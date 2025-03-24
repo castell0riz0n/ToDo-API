@@ -22,8 +22,4 @@
     <ProjectReference Include="..\TeamA.ToDo.Core\TeamA.ToDo.Core.csproj" />
   </ItemGroup>
 
-  <ItemGroup>
-    <Folder Include="EntityConfigurations\" />
-  </ItemGroup>
-
 </Project>

@@ -1,7 +1,7 @@
 ﻿using System.Security.Claims;
 using TeamA.ToDo.Core.Models;
 
-namespace TeamA.ToDo.Middleware;
+namespace TeamA.ToDo.Host.Middleware;
 
 public class PermissionAuthorizationMiddleware
 {
@@ -18,73 +18,99 @@ public class PermissionAuthorizationMiddleware
 
         // Define route-based permissions
         _routePermissions = new Dictionary<string, List<PermissionRequirement>>(StringComparer.OrdinalIgnoreCase)
+            {
+        // User management routes
         {
-            // User management routes
+            "/api/users",
+            new List<PermissionRequirement>
             {
-                "/api/users",
-                new List<PermissionRequirement>
-                {
-                    new PermissionRequirement(HttpMethod.Get, new List<string> { "Admin" }, new List<string> { "ViewUsers" }),
-                    new PermissionRequirement(HttpMethod.Post, new List<string> { "Admin" }, new List<string> { "CreateUsers" }),
-                }
-            },
+                new PermissionRequirement(HttpMethod.Get, new List<string> { "Admin" }, new List<string> { "ViewUsers" }),
+                new PermissionRequirement(HttpMethod.Post, new List<string> { "Admin" }, new List<string> { "CreateUsers" }),
+            }
+        },
+        {
+            "/api/users/{id}",
+            new List<PermissionRequirement>
             {
-                "/api/users/{id}",
-                new List<PermissionRequirement>
-                {
-                    new PermissionRequirement(HttpMethod.Get, new List<string> { "Admin" }, new List<string> { "ViewUsers" }),
-                    new PermissionRequirement(HttpMethod.Put, new List<string> { "Admin" }, new List<string> { "UpdateUsers" }),
-                    new PermissionRequirement(HttpMethod.Delete, new List<string> { "Admin" }, new List<string> { "DeleteUsers" }),
-                }
-            },
-            
-            // Role management routes
+                new PermissionRequirement(HttpMethod.Get, new List<string> { "Admin" }, new List<string> { "ViewUsers" }),
+                new PermissionRequirement(HttpMethod.Put, new List<string> { "Admin" }, new List<string> { "UpdateUsers" }),
+                new PermissionRequirement(HttpMethod.Delete, new List<string> { "Admin" }, new List<string> { "DeleteUsers" }),
+            }
+        },
+        
+        // Role management routes
+        {
+            "/api/roles",
+            new List<PermissionRequirement>
             {
-                "/api/roles",
-                new List<PermissionRequirement>
-                {
-                    new PermissionRequirement(HttpMethod.Get, new List<string> { "Admin" }, new List<string> { "ViewRoles" }),
-                    new PermissionRequirement(HttpMethod.Post, new List<string> { "Admin" }, new List<string> { "ManageRoles" }),
-                }
-            },
+                new PermissionRequirement(HttpMethod.Get, new List<string> { "Admin" }, new List<string> { "ViewRoles" }),
+                new PermissionRequirement(HttpMethod.Post, new List<string> { "Admin" }, new List<string> { "ManageRoles" }),
+            }
+        },
+        {
+            "/api/roles/{id}",
+            new List<PermissionRequirement>
             {
-                "/api/roles/{id}",
-                new List<PermissionRequirement>
-                {
-                    new PermissionRequirement(HttpMethod.Get, new List<string> { "Admin" }, new List<string> { "ViewRoles" }),
-                    new PermissionRequirement(HttpMethod.Put, new List<string> { "Admin" }, new List<string> { "ManageRoles" }),
-                    new PermissionRequirement(HttpMethod.Delete, new List<string> { "Admin" }, new List<string> { "ManageRoles" }),
-                }
-            },
-            
-            // Todo routes - more permissive
+                new PermissionRequirement(HttpMethod.Get, new List<string> { "Admin" }, new List<string> { "ViewRoles" }),
+                new PermissionRequirement(HttpMethod.Put, new List<string> { "Admin" }, new List<string> { "ManageRoles" }),
+                new PermissionRequirement(HttpMethod.Delete, new List<string> { "Admin" }, new List<string> { "ManageRoles" }),
+            }
+        },
+        
+        // Tasks routes - more permissive
+        {
+            "/api/tasks",
+            new List<PermissionRequirement>
             {
-                "/api/todos",
-                new List<PermissionRequirement>
-                {
-                    new PermissionRequirement(HttpMethod.Get, new List<string> { "Admin", "User" }, new List<string>()),
-                    new PermissionRequirement(HttpMethod.Post, new List<string> { "Admin", "User" }, new List<string>()),
-                }
-            },
+                new PermissionRequirement(HttpMethod.Get, new List<string> { "Admin", "User" }, new List<string>()),
+                new PermissionRequirement(HttpMethod.Post, new List<string> { "Admin", "User" }, new List<string>()),
+            }
+        },
+        {
+            "/api/tasks/{id}",
+            new List<PermissionRequirement>
             {
-                "/api/todos/{id}",
-                new List<PermissionRequirement>
-                {
-                    new PermissionRequirement(HttpMethod.Get, new List<string> { "Admin", "User" }, new List<string>()),
-                    new PermissionRequirement(HttpMethod.Put, new List<string> { "Admin", "User" }, new List<string>()),
-                    new PermissionRequirement(HttpMethod.Delete, new List<string> { "Admin", "User" }, new List<string>()),
-                }
-            },
-            
-            // Admin-only routes
+                new PermissionRequirement(HttpMethod.Get, new List<string> { "Admin", "User" }, new List<string>()),
+                new PermissionRequirement(HttpMethod.Put, new List<string> { "Admin", "User" }, new List<string>()),
+                new PermissionRequirement(HttpMethod.Delete, new List<string> { "Admin", "User" }, new List<string>()),
+                new PermissionRequirement(HttpMethod.Patch, new List<string> { "Admin", "User" }, new List<string>()),
+            }
+        },
+        
+        // Task-related nested routes
+        {
+            "/api/tasks/{taskId}/notes",
+            new List<PermissionRequirement>
             {
-                "/api/admin/statistics",
-                new List<PermissionRequirement>
-                {
-                    new PermissionRequirement(HttpMethod.Get, new List<string> { "Admin" }, new List<string>()),
-                }
-            },
-        };
+                new PermissionRequirement(HttpMethod.Get, new List<string> { "Admin", "User" }, new List<string>()),
+                new PermissionRequirement(HttpMethod.Post, new List<string> { "Admin", "User" }, new List<string>()),
+            }
+        },
+        {
+            "/api/tasks/{taskId}/reminders",
+            new List<PermissionRequirement>
+            {
+                new PermissionRequirement(HttpMethod.Get, new List<string> { "Admin", "User" }, new List<string>()),
+                new PermissionRequirement(HttpMethod.Post, new List<string> { "Admin", "User" }, new List<string>()),
+            }
+        },
+        
+        // Admin-only routes
+        {
+            "/api/tasks/all",
+            new List<PermissionRequirement>
+            {
+                new PermissionRequirement(HttpMethod.Get, new List<string> { "Admin" }, new List<string> { "ViewAllTodos" }),
+            }
+        },
+        {
+            "/api/admin/statistics",
+            new List<PermissionRequirement>
+            {
+                new PermissionRequirement(HttpMethod.Get, new List<string> { "Admin" }, new List<string>()),
+            }
+        },
+    };
     }
 
     public async Task InvokeAsync(HttpContext context)

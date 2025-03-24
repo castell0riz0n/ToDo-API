@@ -1,6 +1,7 @@
-﻿using TeamA.ToDo.Middleware;
+﻿using TeamA.ToDo.Host.Middleware;
+using TeamA.ToDo.Middleware;
 
-namespace TeamA.ToDo.Extensions;
+namespace TeamA.ToDo.Host.Extensions;
 public static class MiddlewareExtensions
 {
     public static IApplicationBuilder UsePermissionAuthorization(this IApplicationBuilder app)

@@ -22,5 +22,7 @@ namespace TodoApp.API.DTOs
         public List<ReminderDto> Reminders { get; set; }
         public List<string> Tags { get; set; }
         public List<TodoNoteDto> Notes { get; set; }
+
+        public string UserName { get; set; }
     }
 }

@@ -369,6 +369,7 @@ namespace TeamA.ToDo.Application.Services
         public async Task<bool> DeleteTaskAsync(Guid id, string userId)
         {
             var task = await _context.TodoTasks
+                .Include(t => t.TaskTags)
                 .FirstOrDefaultAsync(t => t.Id == id && t.UserId == userId);
 
             if (task == null)
@@ -381,6 +382,8 @@ namespace TeamA.ToDo.Application.Services
             {
                 await _recurringTaskService.CancelRecurringTaskAsync(task.Id);
             }
+
+            _context.TaskTags.RemoveRange(task.TaskTags);
 
             _context.TodoTasks.Remove(task);
             await _context.SaveChangesAsync();
@@ -461,6 +464,85 @@ namespace TeamA.ToDo.Application.Services
                 : 0;
 
             return statistics;
+        }
+
+        public async Task<PagedResponse<TodoTaskDto>> GetAllTasksAsync(TaskFilterDto filter)
+        {
+            IQueryable<TodoTask> query = _context.TodoTasks
+                .Include(t => t.Category)
+                .Include(t => t.RecurrenceInfo)
+                .Include(t => t.Reminders)
+                .Include(t => t.TaskTags)
+                    .ThenInclude(tt => tt.Tag)
+                .Include(t => t.Notes)
+                .Include(t => t.User);  // Include user data for admin view
+
+            // Apply filters but don't filter by UserId - this is for admin view
+            if (!string.IsNullOrEmpty(filter.SearchTerm))
+            {
+                query = query.Where(t =>
+                    t.Title.Contains(filter.SearchTerm) ||
+                    t.Description.Contains(filter.SearchTerm) ||
+                    t.TaskTags.Any(tt => tt.Tag.Name.Contains(filter.SearchTerm)));
+            }
+
+            if (filter.Priority.HasValue)
+            {
+                query = query.Where(t => t.Priority == filter.Priority.Value);
+            }
+
+            // ... (other filters same as GetTasksAsync)
+
+            // Apply sorting
+            query = filter.SortBy.ToLower() switch
+            {
+                "title" => filter.SortAscending ?
+                    query.OrderBy(t => t.Title) :
+                    query.OrderByDescending(t => t.Title),
+                "priority" => filter.SortAscending ?
+                    query.OrderBy(t => t.Priority) :
+                    query.OrderByDescending(t => t.Priority),
+                "status" => filter.SortAscending ?
+                    query.OrderBy(t => t.Status) :
+                    query.OrderByDescending(t => t.Status),
+                "createdat" => filter.SortAscending ?
+                    query.OrderBy(t => t.CreatedAt) :
+                    query.OrderByDescending(t => t.CreatedAt),
+                "duedate" => filter.SortAscending ?
+                    query.OrderBy(t => t.DueDate) :
+                    query.OrderByDescending(t => t.DueDate),
+                "username" => filter.SortAscending ?  // Added ability to sort by user
+                    query.OrderBy(t => t.User.UserName) :
+                    query.OrderByDescending(t => t.User.UserName),
+                _ => filter.SortAscending ?
+                    query.OrderBy(t => t.DueDate) :
+                    query.OrderByDescending(t => t.DueDate)
+            };
+
+            var totalCount = await query.CountAsync();
+            var totalPages = (int)Math.Ceiling(totalCount / (double)filter.PageSize);
+
+            var tasks = await query
+                .Skip((filter.PageNumber - 1) * filter.PageSize)
+                .Take(filter.PageSize)
+                .ToListAsync();
+
+            var taskDtos = tasks.Select(t =>
+            {
+                var dto = MapToDto(t);
+                // Add username to the DTO for admin view
+                dto.UserName = t.User?.UserName;
+                return dto;
+            }).ToList();
+
+            return new PagedResponse<TodoTaskDto>()
+            {
+                Items = taskDtos,
+                TotalItems = totalCount,
+                PageNumber = filter.PageNumber,
+                PageSize = filter.PageSize,
+                TotalPages = totalPages
+            };
         }
 
         private TodoTaskDto MapToDto(TodoTask task)

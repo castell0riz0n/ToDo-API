@@ -1,4 +1,4 @@
-﻿namespace TeamA.ToDo.Extensions;
+﻿namespace TeamA.ToDo.Host.Extensions;
 
 public static class DataSeederExtensions
 {

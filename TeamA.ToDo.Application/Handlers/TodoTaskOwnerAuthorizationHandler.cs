@@ -5,12 +5,12 @@ using TeamA.ToDo.Core.Models.Todo;
 
 namespace TeamA.ToDo.Application.Handlers;
 
-public class ToDoOwnerAuthorizationHandler : AuthorizationHandler<ToDoOwnerRequirement, ToDoItem>
+public class TodoTaskOwnerAuthorizationHandler : AuthorizationHandler<ToDoOwnerRequirement, TodoTask>
 {
     protected override Task HandleRequirementAsync(
         AuthorizationHandlerContext context,
         ToDoOwnerRequirement requirement,
-        ToDoItem resource)
+        TodoTask resource)
     {
         if (context.User == null || resource == null)
         {

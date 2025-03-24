@@ -13,4 +13,5 @@ public interface ITodoTaskService
     Task<bool> DeleteTaskAsync(Guid id, string userId);
     Task<TodoTaskDto> ChangeTaskStatusAsync(Guid id, string userId, TodoTaskStatus status);
     Task<TaskStatisticsDto> GetTaskStatisticsAsync(string userId);
+    Task<PagedResponse<TodoTaskDto>> GetAllTasksAsync(TaskFilterDto filter);
 }

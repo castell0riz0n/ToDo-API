@@ -24,11 +24,15 @@ namespace TeamA.ToDo.Host.Controllers
         public async Task<ActionResult<PagedResponse<TodoTaskDto>>> GetTasks([FromQuery] TaskFilterDto filter)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+
+            // If user is admin with ViewAllTodos permission, they should be able to view all tasks
+            // This should be handled in the service layer
             var result = await _todoTaskService.GetTasksAsync(userId, filter);
             return Ok(result);
         }
 
         [HttpGet("{id}")]
+        [Authorize(Policy = "TodoOwnerPolicy")]
         public async Task<ActionResult<TodoTaskDto>> GetTask(Guid id)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -51,6 +55,7 @@ namespace TeamA.ToDo.Host.Controllers
         }
 
         [HttpPut("{id}")]
+        [Authorize(Policy = "TodoOwnerPolicy")]
         public async Task<ActionResult<TodoTaskDto>> UpdateTask(Guid id, UpdateTodoTaskDto dto)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -65,6 +70,7 @@ namespace TeamA.ToDo.Host.Controllers
         }
 
         [HttpDelete("{id}")]
+        [Authorize(Policy = "TodoOwnerPolicy")]
         public async Task<ActionResult> DeleteTask(Guid id)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -79,6 +85,7 @@ namespace TeamA.ToDo.Host.Controllers
         }
 
         [HttpPatch("{id}/status")]
+        [Authorize(Policy = "TodoOwnerPolicy")]
         public async Task<ActionResult<TodoTaskDto>> UpdateTaskStatus(Guid id, [FromBody] TodoTaskStatus status)
         {
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
@@ -98,6 +105,15 @@ namespace TeamA.ToDo.Host.Controllers
             var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
             var statistics = await _todoTaskService.GetTaskStatisticsAsync(userId);
             return Ok(statistics);
+        }
+
+        [HttpGet("all")]
+        [Authorize(Policy = "CanViewAllTodos")]
+        public async Task<ActionResult<PagedResponse<TodoTaskDto>>> GetAllTasks([FromQuery] TaskFilterDto filter)
+        {
+            // Special admin mode - pass null for userId to get all tasks
+            var result = await _todoTaskService.GetAllTasksAsync(filter);
+            return Ok(result);
         }
     }
 }

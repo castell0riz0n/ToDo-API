@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TeamA.ToDo.EntityFramework;
 
@@ -11,9 +12,11 @@ using TeamA.ToDo.EntityFramework;
 namespace TeamA.ToDo.EntityFramework.Migrations
 {
     [DbContext(typeof(ApplicationDbContext))]
-    partial class ApplicationDbContextModelSnapshot : ModelSnapshot
+    [Migration("20250323232952_ToDoBaseModelsAdded")]
+    partial class ToDoBaseModelsAdded
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -465,6 +468,80 @@ namespace TeamA.ToDo.EntityFramework.Migrations
                     b.ToTable("TaskTags");
                 });
 
+            modelBuilder.Entity("TeamA.ToDo.Core.Models.Todo.ToDoItem", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Attachments")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<string>("Category")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(1000)
+                        .HasColumnType("nvarchar(1000)");
+
+                    b.Property<DateTime?>("DueDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsCompleted")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsReminded")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Priority")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("RecurrencePattern")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("Tags")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("Title")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<DateTime?>("UpdatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("ToDoItems");
+                });
+
             modelBuilder.Entity("TeamA.ToDo.Core.Models.Todo.TodoNote", b =>
                 {
                     b.Property<Guid>("Id")
@@ -728,6 +805,17 @@ namespace TeamA.ToDo.EntityFramework.Migrations
                     b.Navigation("TodoTask");
                 });
 
+            modelBuilder.Entity("TeamA.ToDo.Core.Models.Todo.ToDoItem", b =>
+                {
+                    b.HasOne("TeamA.ToDo.Core.Models.ApplicationUser", "User")
+                        .WithMany("ToDoItems")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
             modelBuilder.Entity("TeamA.ToDo.Core.Models.Todo.TodoNote", b =>
                 {
                     b.HasOne("TeamA.ToDo.Core.Models.Todo.TodoTask", "TodoTask")
@@ -777,6 +865,8 @@ namespace TeamA.ToDo.EntityFramework.Migrations
                     b.Navigation("RefreshTokens");
 
                     b.Navigation("Tasks");
+
+                    b.Navigation("ToDoItems");
                 });
 
             modelBuilder.Entity("TeamA.ToDo.Core.Models.Permission", b =>
