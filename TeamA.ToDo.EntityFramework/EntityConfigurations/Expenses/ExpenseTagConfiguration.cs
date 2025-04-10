@@ -1,12 +1,12 @@
 ﻿using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using TeamA.ToDo.Core.Models.Todo;
+using TeamA.ToDo.Core.Models.Expenses;
 
-namespace TeamA.ToDo.EntityFramework.EntityConfigurations;
+namespace TeamA.ToDo.EntityFramework.EntityConfigurations.Expenses;
 
-public class TagConfiguration : IEntityTypeConfiguration<Tag>
+public class ExpenseTagConfiguration : IEntityTypeConfiguration<ExpenseTag>
 {
-    public void Configure(EntityTypeBuilder<Tag> builder)
+    public void Configure(EntityTypeBuilder<ExpenseTag> builder)
     {
         builder.HasKey(t => t.Id);
 
@@ -18,7 +18,7 @@ public class TagConfiguration : IEntityTypeConfiguration<Tag>
             .IsRequired();
 
         builder.HasOne(t => t.User)
-            .WithMany()
+            .WithMany(u => u.ExpenseTags)
             .HasForeignKey(t => t.UserId)
             .OnDelete(DeleteBehavior.Cascade);
 

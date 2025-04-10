@@ -22,6 +22,21 @@ namespace TeamA.ToDo.EntityFramework.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("ExpenseExpenseTag", b =>
+                {
+                    b.Property<Guid>("ExpensesId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<Guid>("TagsId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.HasKey("ExpensesId", "TagsId");
+
+                    b.HasIndex("TagsId");
+
+                    b.ToTable("ExpenseExpenseTag");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.Property<int>("Id")
@@ -245,6 +260,249 @@ namespace TeamA.ToDo.EntityFramework.Migrations
                         .HasFilter("[NormalizedUserName] IS NOT NULL");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("TeamA.ToDo.Core.Models.Expenses.Budget", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid?>("CategoryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("LastModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int>("Period")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Budgets");
+                });
+
+            modelBuilder.Entity("TeamA.ToDo.Core.Models.Expenses.Expense", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("decimal(18,2)");
+
+                    b.Property<Guid>("CategoryId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("Date")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<bool>("IsRecurring")
+                        .HasColumnType("bit");
+
+                    b.Property<DateTime?>("LastModifiedAt")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid?>("PaymentMethodId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("ReceiptUrl")
+                        .IsRequired()
+                        .HasMaxLength(500)
+                        .HasColumnType("nvarchar(500)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CategoryId");
+
+                    b.HasIndex("PaymentMethodId");
+
+                    b.HasIndex("UserId");
+
+                    b.ToTable("Expenses");
+                });
+
+            modelBuilder.Entity("TeamA.ToDo.Core.Models.Expenses.ExpenseCategory", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Color")
+                        .IsRequired()
+                        .HasMaxLength(7)
+                        .HasColumnType("nvarchar(7)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Icon")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsSystem")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("ExpenseCategories");
+                });
+
+            modelBuilder.Entity("TeamA.ToDo.Core.Models.Expenses.ExpenseRecurrence", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("CustomCronExpression")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("nvarchar(100)");
+
+                    b.Property<int?>("DayOfMonth")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("DayOfWeek")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("EndDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<Guid>("ExpenseId")
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<int>("Interval")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("LastProcessedDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("NextProcessingDate")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("RecurrenceType")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("StartDate")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ExpenseId")
+                        .IsUnique();
+
+                    b.ToTable("ExpenseRecurrences");
+                });
+
+            modelBuilder.Entity("TeamA.ToDo.Core.Models.Expenses.ExpenseTag", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("nvarchar(30)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("ExpenseTags");
+                });
+
+            modelBuilder.Entity("TeamA.ToDo.Core.Models.Expenses.PaymentMethod", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uniqueidentifier");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.Property<string>("Icon")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<bool>("IsDefault")
+                        .HasColumnType("bit");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)");
+
+                    b.Property<string>("UserId")
+                        .IsRequired()
+                        .HasColumnType("nvarchar(450)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("UserId", "Name")
+                        .IsUnique();
+
+                    b.ToTable("PaymentMethods");
                 });
 
             modelBuilder.Entity("TeamA.ToDo.Core.Models.Permission", b =>
@@ -584,6 +842,21 @@ namespace TeamA.ToDo.EntityFramework.Migrations
                     b.ToTable("UserActivities");
                 });
 
+            modelBuilder.Entity("ExpenseExpenseTag", b =>
+                {
+                    b.HasOne("TeamA.ToDo.Core.Models.Expenses.Expense", null)
+                        .WithMany()
+                        .HasForeignKey("ExpensesId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("TeamA.ToDo.Core.Models.Expenses.ExpenseTag", null)
+                        .WithMany()
+                        .HasForeignKey("TagsId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<string>", b =>
                 {
                     b.HasOne("TeamA.ToDo.Core.Models.ApplicationRole", null)
@@ -633,6 +906,94 @@ namespace TeamA.ToDo.EntityFramework.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("TeamA.ToDo.Core.Models.Expenses.Budget", b =>
+                {
+                    b.HasOne("TeamA.ToDo.Core.Models.Expenses.ExpenseCategory", "Category")
+                        .WithMany("Budgets")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.SetNull);
+
+                    b.HasOne("TeamA.ToDo.Core.Models.ApplicationUser", "User")
+                        .WithMany("Budgets")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("TeamA.ToDo.Core.Models.Expenses.Expense", b =>
+                {
+                    b.HasOne("TeamA.ToDo.Core.Models.Expenses.ExpenseCategory", "Category")
+                        .WithMany("Expenses")
+                        .HasForeignKey("CategoryId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("TeamA.ToDo.Core.Models.Expenses.PaymentMethod", "PaymentMethod")
+                        .WithMany("Expenses")
+                        .HasForeignKey("PaymentMethodId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("TeamA.ToDo.Core.Models.ApplicationUser", "User")
+                        .WithMany("Expenses")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Category");
+
+                    b.Navigation("PaymentMethod");
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("TeamA.ToDo.Core.Models.Expenses.ExpenseCategory", b =>
+                {
+                    b.HasOne("TeamA.ToDo.Core.Models.ApplicationUser", "User")
+                        .WithMany("ExpenseCategories")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("TeamA.ToDo.Core.Models.Expenses.ExpenseRecurrence", b =>
+                {
+                    b.HasOne("TeamA.ToDo.Core.Models.Expenses.Expense", "Expense")
+                        .WithOne("RecurrenceInfo")
+                        .HasForeignKey("TeamA.ToDo.Core.Models.Expenses.ExpenseRecurrence", "ExpenseId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Expense");
+                });
+
+            modelBuilder.Entity("TeamA.ToDo.Core.Models.Expenses.ExpenseTag", b =>
+                {
+                    b.HasOne("TeamA.ToDo.Core.Models.ApplicationUser", "User")
+                        .WithMany("ExpenseTags")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
+                });
+
+            modelBuilder.Entity("TeamA.ToDo.Core.Models.Expenses.PaymentMethod", b =>
+                {
+                    b.HasOne("TeamA.ToDo.Core.Models.ApplicationUser", "User")
+                        .WithMany("PaymentMethods")
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("User");
                 });
 
             modelBuilder.Entity("TeamA.ToDo.Core.Models.RefreshToken", b =>
@@ -774,9 +1135,37 @@ namespace TeamA.ToDo.EntityFramework.Migrations
 
             modelBuilder.Entity("TeamA.ToDo.Core.Models.ApplicationUser", b =>
                 {
+                    b.Navigation("Budgets");
+
+                    b.Navigation("ExpenseCategories");
+
+                    b.Navigation("ExpenseTags");
+
+                    b.Navigation("Expenses");
+
+                    b.Navigation("PaymentMethods");
+
                     b.Navigation("RefreshTokens");
 
                     b.Navigation("Tasks");
+                });
+
+            modelBuilder.Entity("TeamA.ToDo.Core.Models.Expenses.Expense", b =>
+                {
+                    b.Navigation("RecurrenceInfo")
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("TeamA.ToDo.Core.Models.Expenses.ExpenseCategory", b =>
+                {
+                    b.Navigation("Budgets");
+
+                    b.Navigation("Expenses");
+                });
+
+            modelBuilder.Entity("TeamA.ToDo.Core.Models.Expenses.PaymentMethod", b =>
+                {
+                    b.Navigation("Expenses");
                 });
 
             modelBuilder.Entity("TeamA.ToDo.Core.Models.Permission", b =>

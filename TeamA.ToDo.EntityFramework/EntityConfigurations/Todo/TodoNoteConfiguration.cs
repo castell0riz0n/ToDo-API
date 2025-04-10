@@ -2,7 +2,7 @@
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 using TeamA.ToDo.Core.Models.Todo;
 
-namespace TeamA.ToDo.EntityFramework.EntityConfigurations;
+namespace TeamA.ToDo.EntityFramework.EntityConfigurations.Todo;
 
 public class TodoNoteConfiguration : IEntityTypeConfiguration<TodoNote>
 {
