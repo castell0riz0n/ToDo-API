@@ -476,8 +476,7 @@ namespace TeamA.ToDo.Application.Services.Expenses
 
         private async Task SendBudgetSummaryEmailAsync(
             ApplicationUser user,
-            List<(Budget Budget, decimal SpentAmount, decimal SpentPercentage, decimal RemainingAmount)>
-                budgetSummaries,
+            List<(Budget Budget, decimal SpentAmount, decimal SpentPercentage, decimal RemainingAmount)> budgetSummaries,
             DateTime monthStart)
         {
             try
@@ -497,10 +496,197 @@ namespace TeamA.ToDo.Application.Services.Expenses
 
                 // Build email content
                 var emailBuilder = new System.Text.StringBuilder();
-            }
-            catch (Exception exception)
-            {
 
+                emailBuilder.AppendLine($@"
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset='utf-8'>
+    <meta name='viewport' content='width=device-width, initial-scale=1'>
+    <title>Monthly Budget Summary</title>
+    <style>
+        body {{
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }}
+        .container {{
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 20px;
+            background-color: #f9f9f9;
+        }}
+        .header {{
+            text-align: center;
+            margin-bottom: 20px;
+        }}
+        .summary-box {{
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 15px;
+            margin-bottom: 20px;
+            background-color: #f5f5f5;
+        }}
+        .budget-item {{
+            margin-bottom: 15px;
+            padding: 15px;
+            border-radius: 5px;
+        }}
+        .over-budget {{
+            background-color: #FFEBE9;
+            border: 1px solid #FFCDD2;
+        }}
+        .healthy-budget {{
+            background-color: #E8F5E9;
+            border: 1px solid #C8E6C9;
+        }}
+        .warning {{
+            background-color: #FFF9E6;
+            border: 1px solid #FFECB3;
+        }}
+        .budget-name {{
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 5px;
+        }}
+        .budget-details {{
+            margin-bottom: 10px;
+        }}
+        .progress-container {{
+            height: 20px;
+            background-color: #e0e0e0;
+            border-radius: 10px;
+            margin-bottom: 5px;
+        }}
+        .progress-bar {{
+            height: 100%;
+            border-radius: 10px;
+            text-align: center;
+            color: white;
+            font-weight: bold;
+        }}
+        .over-budget-bar {{
+            background-color: #F44336;
+        }}
+        .healthy-bar {{
+            background-color: #4CAF50;
+        }}
+        .warning-bar {{
+            background-color: #FFC107;
+        }}
+        .action-button {{
+            display: inline-block;
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 20px;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-top: 15px;
+        }}
+        .footer {{
+            margin-top: 20px;
+            font-size: 12px;
+            text-align: center;
+            color: #777;
+        }}
+    </style>
+</head>
+<body>
+    <div class='container'>
+        <div class='header'>
+            <h2>Budget Summary for {monthName}</h2>
+        </div>
+        <p>Hi {user.FirstName},</p>
+        <p>Here's your monthly budget summary for {monthName}:</p>
+        
+        <div class='summary-box'>
+            <h3>Overall Summary</h3>
+            <div><strong>Total Budgeted:</strong> ${totalBudgeted:N2}</div>
+            <div><strong>Total Spent:</strong> ${totalSpent:N2}</div>
+            <div><strong>Remaining:</strong> ${totalRemaining:N2}</div>
+            <div class='progress-container'>
+                <div class='progress-bar {(overallPercentage > 100 ? "over-budget-bar" : overallPercentage >= 80 ? "warning-bar" : "healthy-bar")}' 
+                     style='width: {Math.Min(overallPercentage, 100):N0}%;'>
+                     {overallPercentage:N0}%
+                </div>
+            </div>
+        </div>
+");
+
+                // Add over budget section if any
+                if (overSpentBudgets.Any())
+                {
+                    emailBuilder.AppendLine($@"
+        <h3>Over Budget ({overSpentBudgets.Count})</h3>
+        
+        {string.Join("", overSpentBudgets.Select(b => $@"
+        <div class='budget-item over-budget'>
+            <div class='budget-name'>{b.Budget.Name} ({b.Budget.Category?.Name ?? "Uncategorized"})</div>
+            <div class='budget-details'>
+                <div><strong>Budget:</strong> ${b.Budget.Amount:N2}</div>
+                <div><strong>Spent:</strong> ${b.SpentAmount:N2}</div>
+                <div><strong>Status:</strong> ${b.SpentAmount - b.Budget.Amount:N2} over budget</div>
+            </div>
+            <div class='progress-container'>
+                <div class='progress-bar over-budget-bar' style='width: 100%;'>{b.SpentPercentage:N0}%</div>
+            </div>
+        </div>
+        "))}");
+                }
+
+                // Add healthy budgets section
+                if (healthyBudgets.Any())
+                {
+                    emailBuilder.AppendLine($@"
+        <h3>Healthy Budgets ({healthyBudgets.Count})</h3>
+        
+        {string.Join("", healthyBudgets.Select(b => $@"
+        <div class='budget-item {(b.SpentPercentage >= 80 ? "warning" : "healthy-budget")}'>
+            <div class='budget-name'>{b.Budget.Name} ({b.Budget.Category?.Name ?? "Uncategorized"})</div>
+            <div class='budget-details'>
+                <div><strong>Budget:</strong> ${b.Budget.Amount:N2}</div>
+                <div><strong>Spent:</strong> ${b.SpentAmount:N2}</div>
+                <div><strong>Remaining:</strong> ${b.RemainingAmount:N2}</div>
+            </div>
+            <div class='progress-container'>
+                <div class='progress-bar {(b.SpentPercentage >= 80 ? "warning-bar" : "healthy-bar")}' 
+                     style='width: {b.SpentPercentage}%;'>
+                     {b.SpentPercentage:N0}%
+                </div>
+            </div>
+        </div>
+        "))}");
+                }
+
+                emailBuilder.AppendLine($@"
+        <p>You can view your detailed budget information on the {_appConfig.AppName} dashboard.</p>
+        
+        <div style='text-align: center;'>
+            <a href='{_appConfig.BaseUrl}/expenses/budgets' class='action-button'>View Budgets</a>
+        </div>
+        
+        <p>Best regards,<br>The {_appConfig.AppName} Team</p>
+    </div>
+    <div class='footer'>
+        <p>This is an automated message. Please do not reply to this email.</p>
+        <p>&copy; {DateTime.Now.Year} {_appConfig.AppName}. All rights reserved.</p>
+        <p>You can manage your email preferences in your <a href='{_appConfig.BaseUrl}/account/settings'>account settings</a>.</p>
+    </div>
+</body>
+</html>
+");
+
+                // Send the email
+                await _emailSender.SendEmailAsync(user.Email, subject, emailBuilder.ToString());
+                _logger.LogInformation($"Budget summary email sent to {user.Email}");
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, $"Error sending budget summary email to {user.Email}");
+                throw;
             }
         }
 
