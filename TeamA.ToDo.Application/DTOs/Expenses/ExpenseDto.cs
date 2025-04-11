@@ -3,6 +3,7 @@
     public class ExpenseDto
     {
         public Guid Id { get; set; }
+        public string UserName { get; set; }
         public decimal Amount { get; set; }
         public string Description { get; set; }
         public DateTime Date { get; set; }

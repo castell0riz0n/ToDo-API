@@ -25,5 +25,6 @@ public class ExpenseTagConfiguration : IEntityTypeConfiguration<ExpenseTag>
         // Ensure unique tag names per user
         builder.HasIndex(t => new { t.UserId, t.Name })
             .IsUnique();
+        
     }
 }

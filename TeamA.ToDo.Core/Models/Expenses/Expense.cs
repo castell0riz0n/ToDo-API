@@ -23,26 +23,3 @@ namespace TeamA.ToDo.Core.Models.Expenses
         public ICollection<ExpenseTag> Tags { get; set; } = new List<ExpenseTag>();
     }
 }
-
-namespace TeamA.ToDo.Core.Models.Expenses
-{
-}
-
-namespace TeamA.ToDo.Core.Models.Expenses
-{
-}
-
-namespace TeamA.ToDo.Core.Models.Expenses
-{
-}
-
-
-namespace TeamA.ToDo.Core.Models.Expenses
-{
-}
-
-
-
-namespace TeamA.ToDo.Core.Models.Expenses
-{
-}

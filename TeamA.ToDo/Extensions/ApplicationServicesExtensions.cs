@@ -8,8 +8,10 @@ using TeamA.ToDo.Application.DTOs.Email;
 using TeamA.ToDo.Application.Email;
 using TeamA.ToDo.Application.Helpers;
 using TeamA.ToDo.Application.Interfaces;
+using TeamA.ToDo.Application.Interfaces.Expenses;
 using TeamA.ToDo.Application.Security;
 using TeamA.ToDo.Application.Services;
+using TeamA.ToDo.Application.Services.Expenses;
 using TeamA.ToDo.Core.Models;
 using TeamA.ToDo.Core.Models.General;
 
@@ -71,5 +73,12 @@ public static class ApplicationServicesExtensions
         services.AddScoped<ITagService, TagService>();
         services.AddScoped<INoteService, NoteService>();
         services.AddScoped<IReminderService, ReminderService>();
+
+        // Expense Management Services
+        services.AddScoped<IBudgetService, BudgetService>();
+        services.AddScoped<IRecurringExpenseService, RecurringExpenseService>();
+        services.AddScoped<IExpenseCategoryService, ExpenseCategoryService>();
+        services.AddScoped<IExpenseService, ExpenseService>();
+        services.AddScoped<IPaymentMethodService, PaymentMethodService>();
     }
 }

@@ -1,7 +1,9 @@
 ﻿using Hangfire;
 using Microsoft.EntityFrameworkCore;
 using TeamA.ToDo.Application.Interfaces;
+using TeamA.ToDo.Application.Interfaces.Expenses;
 using TeamA.ToDo.Application.Services;
+using TeamA.ToDo.Application.Services.Expenses;
 using TeamA.ToDo.Core.Shared.Enums.Todo;
 using TeamA.ToDo.EntityFramework;
 
@@ -11,29 +13,23 @@ namespace TeamA.ToDo.Host.Extensions
     {
         public static void RegisterRecurringJobs(IServiceProvider serviceProvider)
         {
-            // Schedule the job to check for overdue tasks daily at midnight
-            RecurringJob.AddOrUpdate<TaskNotificationJob>(
-                "check-overdue-tasks",
-                job => job.CheckForOverdueTasks(),
-                Cron.Daily);
+            HangfireConfig.RegisterRecurringJobs(serviceProvider);
 
-            // Schedule the job to check for tasks due today daily at 7 AM
-            RecurringJob.AddOrUpdate<TaskNotificationJob>(
-                "check-tasks-due-today",
-                job => job.CheckForTasksDueToday(),
-                "0 7 * * *");
+            try
+            {
+                // Enqueue the job using Hangfire's DI
+                BackgroundJob.Enqueue<IRecurringExpenseService>(service => service.ProcessRecurringExpensesAsync());
 
-            // Schedule the job to generate upcoming recurring tasks weekly on Sunday at midnight
-            RecurringJob.AddOrUpdate<TaskRecurrenceJob>(
-                "generate-upcoming-recurring-tasks",
-                job => job.GenerateUpcomingRecurringTasks(),
-                Cron.Weekly);
-
-            // Schedule the job to clean up completed tasks monthly on the 1st at 1 AM
-            RecurringJob.AddOrUpdate<TaskCleanupJob>(
-                "clean-up-old-completed-tasks",
-                job => job.CleanUpOldCompletedTasks(90), // Archive tasks completed more than 90 days ago
-                "0 1 1 * *");
+                var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+                var logger = loggerFactory.CreateLogger("RecurringExpenseInitialization");
+                logger.LogInformation("Enqueued initial processing of recurring expenses");
+            }
+            catch (Exception ex)
+            {
+                var loggerFactory = serviceProvider.GetRequiredService<ILoggerFactory>();
+                var logger = loggerFactory.CreateLogger("RecurringExpenseInitialization");
+                logger.LogError(ex, "Error scheduling initial processing of recurring expenses");
+            }
         }
 
         public static void EnqueueExistingReminders(IServiceProvider serviceProvider)
@@ -58,10 +54,40 @@ namespace TeamA.ToDo.Host.Extensions
                     recurringTaskService.ScheduleReminderAsync(reminder).Wait();
                     logger.LogInformation($"Enqueued existing reminder {reminder.Id} for task {reminder.TodoTaskId}");
                 }
+                
+                // Schedule existing recurring expenses
+                EnqueueExistingRecurringExpenses(scope.ServiceProvider, logger);
             }
             catch (Exception ex)
             {
                 logger.LogError(ex, "Error enqueueing existing reminders");
+            }
+        }
+        
+        private static void EnqueueExistingRecurringExpenses(IServiceProvider serviceProvider, ILogger logger)
+        {
+            try
+            {
+                var context = serviceProvider.GetRequiredService<ApplicationDbContext>();
+                var recurringExpenseService = serviceProvider.GetRequiredService<IRecurringExpenseService>();
+                
+                // Get active recurring expenses
+                var recurringExpenses = context.Expenses
+                    .Include(e => e.RecurrenceInfo)
+                    .Where(e => e.IsRecurring && e.RecurrenceInfo != null)
+                    .ToList();
+                    
+                foreach (var expense in recurringExpenses)
+                {
+                    recurringExpenseService.ScheduleRecurringExpenseAsync(expense).Wait();
+                    logger.LogInformation($"Enqueued existing recurring expense {expense.Id}");
+                }
+                
+                logger.LogInformation($"Scheduled {recurringExpenses.Count} existing recurring expenses");
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex, "Error enqueueing existing recurring expenses");
             }
         }
     }
