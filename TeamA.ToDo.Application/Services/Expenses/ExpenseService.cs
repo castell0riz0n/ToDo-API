@@ -2,6 +2,7 @@
 using Microsoft.EntityFrameworkCore.Query;
 using Microsoft.Extensions.Logging;
 using TeamA.ToDo.Application.DTOs.Expenses;
+using TeamA.ToDo.Application.DTOs.Expenses.Reporting;
 using TeamA.ToDo.Application.DTOs.General;
 using TeamA.ToDo.Application.Interfaces.Expenses;
 using TeamA.ToDo.Core.Models;
@@ -633,6 +634,413 @@ namespace TeamA.ToDo.Application.Services.Expenses
                 return response;
             }
         }
+
+        public async Task<ServiceResponse<List<MonthlyExpenseSummaryDto>>> GetMonthlyExpenseReportAsync(string userId, int year)
+        {
+            var response = new ServiceResponse<List<MonthlyExpenseSummaryDto>>();
+
+            try
+            {
+                // Get all expenses for the specified year
+                var startDate = new DateTime(year, 1, 1);
+                var endDate = new DateTime(year, 12, 31, 23, 59, 59);
+
+                var expenses = await _context.Expenses
+                    .Include(e => e.Category)
+                    .Where(e => e.UserId == userId && e.Date >= startDate && e.Date <= endDate)
+                    .ToListAsync();
+
+                var monthlyReports = new List<MonthlyExpenseSummaryDto>();
+
+                // Generate a report for each month
+                for (int month = 1; month <= 12; month++)
+                {
+                    var monthName = new DateTime(year, month, 1).ToString("MMMM");
+                    var monthStart = new DateTime(year, month, 1);
+                    var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+
+                    var monthlyExpenses = expenses.Where(e => e.Date.Month == month).ToList();
+                    var totalAmount = monthlyExpenses.Sum(e => e.Amount);
+                    var expenseCount = monthlyExpenses.Count;
+
+                    // Calculate category breakdown
+                    var categoryBreakdown = monthlyExpenses
+                        .GroupBy(e => e.Category?.Name ?? "Uncategorized")
+                        .ToDictionary(
+                            g => g.Key,
+                            g => g.Sum(e => e.Amount)
+                        );
+
+                    // Get top expenses for the month
+                    var topExpenses = monthlyExpenses
+                        .OrderByDescending(e => e.Amount)
+                        .Take(5)
+                        .Select(e => new TopExpenseDto
+                        {
+                            Id = e.Id,
+                            Description = e.Description,
+                            Amount = e.Amount,
+                            Date = e.Date,
+                            CategoryName = e.Category?.Name ?? "Uncategorized",
+                            CategoryColor = e.Category?.Color ?? "#808080"
+                        })
+                        .ToList();
+
+                    monthlyReports.Add(new MonthlyExpenseSummaryDto
+                    {
+                        Month = month,
+                        MonthName = monthName,
+                        TotalAmount = totalAmount,
+                        ExpenseCount = expenseCount,
+                        CategoryBreakdown = categoryBreakdown,
+                        TopExpenses = topExpenses
+                    });
+                }
+
+                response.Data = monthlyReports;
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating monthly expense report");
+                response.Success = false;
+                response.Message = "Failed to generate monthly expense report";
+                return response;
+            }
+        }
+
+        public async Task<ServiceResponse<YearlyComparisonReportDto>> GetYearlyComparisonReportAsync(string userId, int year1, int year2)
+        {
+            var response = new ServiceResponse<YearlyComparisonReportDto>();
+
+            try
+            {
+                // Get expenses for both years
+                var startDate1 = new DateTime(year1, 1, 1);
+                var endDate1 = new DateTime(year1, 12, 31, 23, 59, 59);
+                var startDate2 = new DateTime(year2, 1, 1);
+                var endDate2 = new DateTime(year2, 12, 31, 23, 59, 59);
+
+                var expenses1 = await _context.Expenses
+                    .Include(e => e.Category)
+                    .Where(e => e.UserId == userId && e.Date >= startDate1 && e.Date <= endDate1)
+                    .ToListAsync();
+
+                var expenses2 = await _context.Expenses
+                    .Include(e => e.Category)
+                    .Where(e => e.UserId == userId && e.Date >= startDate2 && e.Date <= endDate2)
+                    .ToListAsync();
+
+                var year1Total = expenses1.Sum(e => e.Amount);
+                var year2Total = expenses2.Sum(e => e.Amount);
+                var percentageChange = year1Total > 0
+                    ? ((year2Total - year1Total) / year1Total) * 100
+                    : (year2Total > 0 ? 100 : 0);
+
+                // Monthly comparison
+                var monthlyComparison = new Dictionary<string, YearlyComparisonItemDto>();
+
+                for (int month = 1; month <= 12; month++)
+                {
+                    var monthName = new DateTime(year1, month, 1).ToString("MMMM");
+                    var month1Total = expenses1.Where(e => e.Date.Month == month).Sum(e => e.Amount);
+                    var month2Total = expenses2.Where(e => e.Date.Month == month).Sum(e => e.Amount);
+                    var monthPercentageChange = month1Total > 0
+                        ? ((month2Total - month1Total) / month1Total) * 100
+                        : (month2Total > 0 ? 100 : 0);
+
+                    monthlyComparison[monthName] = new YearlyComparisonItemDto
+                    {
+                        Year1Amount = month1Total,
+                        Year2Amount = month2Total,
+                        PercentageChange = monthPercentageChange
+                    };
+                }
+
+                // Category comparison
+                var categoryComparison = new Dictionary<string, YearlyComparisonItemDto>();
+
+                // Get all unique categories across both years
+                var allCategories = expenses1
+                    .Select(e => e.Category?.Name ?? "Uncategorized")
+                    .Union(expenses2.Select(e => e.Category?.Name ?? "Uncategorized"))
+                    .Distinct()
+                    .ToList();
+
+                foreach (var category in allCategories)
+                {
+                    var category1Total = expenses1
+                        .Where(e => (e.Category?.Name ?? "Uncategorized") == category)
+                        .Sum(e => e.Amount);
+
+                    var category2Total = expenses2
+                        .Where(e => (e.Category?.Name ?? "Uncategorized") == category)
+                        .Sum(e => e.Amount);
+
+                    var categoryPercentageChange = category1Total > 0
+                        ? ((category2Total - category1Total) / category1Total) * 100
+                        : (category2Total > 0 ? 100 : 0);
+
+                    categoryComparison[category] = new YearlyComparisonItemDto
+                    {
+                        Year1Amount = category1Total,
+                        Year2Amount = category2Total,
+                        PercentageChange = categoryPercentageChange
+                    };
+                }
+
+                response.Data = new YearlyComparisonReportDto
+                {
+                    Year1 = year1,
+                    Year2 = year2,
+                    Year1Total = year1Total,
+                    Year2Total = year2Total,
+                    PercentageChange = percentageChange,
+                    MonthlyComparison = monthlyComparison,
+                    CategoryComparison = categoryComparison
+                };
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating yearly comparison report");
+                response.Success = false;
+                response.Message = "Failed to generate yearly comparison report";
+                return response;
+            }
+        }
+
+        public async Task<ServiceResponse<CategoryBreakdownReportDto>> GetCategoryBreakdownReportAsync(string userId, DateTime startDate, DateTime endDate)
+        {
+            var response = new ServiceResponse<CategoryBreakdownReportDto>();
+
+            try
+            {
+                var expenses = await _context.Expenses
+                    .Include(e => e.Category)
+                    .Where(e => e.UserId == userId && e.Date >= startDate && e.Date <= endDate)
+                    .ToListAsync();
+
+                var totalExpenses = expenses.Sum(e => e.Amount);
+
+                var categoryBreakdown = expenses
+                    .GroupBy(e => e.Category?.Name ?? "Uncategorized")
+                    .Select(g => new CategoryBreakdownItemDto
+                    {
+                        CategoryName = g.Key,
+                        CategoryColor = g.First().Category?.Color ?? "#808080",
+                        Amount = g.Sum(e => e.Amount),
+                        Percentage = totalExpenses > 0
+                            ? (g.Sum(e => e.Amount) / totalExpenses) * 100
+                            : 0,
+                        ExpenseCount = g.Count(),
+                        AverageExpenseAmount = g.Count() > 0
+                            ? g.Sum(e => e.Amount) / g.Count()
+                            : 0
+                    })
+                    .OrderByDescending(c => c.Amount)
+                    .ToList();
+
+                response.Data = new CategoryBreakdownReportDto
+                {
+                    StartDate = startDate,
+                    EndDate = endDate,
+                    TotalExpenses = totalExpenses,
+                    Categories = categoryBreakdown
+                };
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating category breakdown report");
+                response.Success = false;
+                response.Message = "Failed to generate category breakdown report";
+                return response;
+            }
+        }
+
+        public async Task<ServiceResponse<TrendAnalysisDto>> GetExpenseTrendAnalysisAsync(string userId, int months)
+        {
+            var response = new ServiceResponse<TrendAnalysisDto>();
+
+            try
+            {
+                // Calculate date range
+                var endDate = DateTime.UtcNow.Date.AddDays(1).AddSeconds(-1); // End of today
+                var startDate = endDate.AddMonths(-months).Date; // Start from X months ago
+
+                var expenses = await _context.Expenses
+                    .Include(e => e.Category)
+                    .Where(e => e.UserId == userId && e.Date >= startDate && e.Date <= endDate)
+                    .ToListAsync();
+
+                // Generate monthly trends
+                var monthlyTrends = new List<MonthlyTrendDto>();
+                var currentDate = startDate;
+
+                while (currentDate <= endDate)
+                {
+                    var monthStart = new DateTime(currentDate.Year, currentDate.Month, 1);
+                    var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+
+                    var monthlyExpenses = expenses
+                        .Where(e => e.Date >= monthStart && e.Date <= monthEnd)
+                        .ToList();
+
+                    var totalAmount = monthlyExpenses.Sum(e => e.Amount);
+                    var expenseCount = monthlyExpenses.Count;
+                    var averageExpense = expenseCount > 0 ? totalAmount / expenseCount : 0;
+
+                    monthlyTrends.Add(new MonthlyTrendDto
+                    {
+                        Month = monthStart,
+                        TotalAmount = totalAmount,
+                        ExpenseCount = expenseCount,
+                        AverageExpense = averageExpense
+                    });
+
+                    currentDate = monthStart.AddMonths(1);
+                }
+
+                // Generate category trends
+                var categoryTrends = new Dictionary<string, List<MonthlyTrendDto>>();
+
+                var categories = expenses
+                    .Select(e => e.Category?.Name ?? "Uncategorized")
+                    .Distinct()
+                    .ToList();
+
+                foreach (var category in categories)
+                {
+                    var categoryMonthlyTrends = new List<MonthlyTrendDto>();
+                    currentDate = startDate;
+
+                    while (currentDate <= endDate)
+                    {
+                        var monthStart = new DateTime(currentDate.Year, currentDate.Month, 1);
+                        var monthEnd = monthStart.AddMonths(1).AddDays(-1);
+
+                        var categoryMonthlyExpenses = expenses
+                            .Where(e => e.Date >= monthStart && e.Date <= monthEnd &&
+                                   (e.Category?.Name ?? "Uncategorized") == category)
+                            .ToList();
+
+                        var totalAmount = categoryMonthlyExpenses.Sum(e => e.Amount);
+                        var expenseCount = categoryMonthlyExpenses.Count;
+                        var averageExpense = expenseCount > 0 ? totalAmount / expenseCount : 0;
+
+                        categoryMonthlyTrends.Add(new MonthlyTrendDto
+                        {
+                            Month = monthStart,
+                            TotalAmount = totalAmount,
+                            ExpenseCount = expenseCount,
+                            AverageExpense = averageExpense
+                        });
+
+                        currentDate = monthStart.AddMonths(1);
+                    }
+
+                    categoryTrends[category] = categoryMonthlyTrends;
+                }
+
+                // Calculate trend summary
+                var averageMonthlyExpense = monthlyTrends.Count > 0
+                    ? monthlyTrends.Average(m => m.TotalAmount)
+                    : 0;
+
+                // Sort monthly expenses for median calculation
+                var sortedMonthlyExpenses = monthlyTrends
+                    .Select(m => m.TotalAmount)
+                    .OrderBy(m => m)
+                    .ToList();
+
+                decimal medianMonthlyExpense = 0;
+                if (sortedMonthlyExpenses.Count > 0)
+                {
+                    int mid = sortedMonthlyExpenses.Count / 2;
+                    medianMonthlyExpense = sortedMonthlyExpenses.Count % 2 == 0
+                        ? (sortedMonthlyExpenses[mid - 1] + sortedMonthlyExpenses[mid]) / 2
+                        : sortedMonthlyExpenses[mid];
+                }
+
+                // Calculate expense growth rate
+                decimal expenseGrowthRate = 0;
+                if (monthlyTrends.Count >= 2)
+                {
+                    var firstMonth = monthlyTrends.First().TotalAmount;
+                    var lastMonth = monthlyTrends.Last().TotalAmount;
+
+                    if (firstMonth > 0)
+                    {
+                        expenseGrowthRate = ((lastMonth - firstMonth) / firstMonth) * 100;
+                    }
+                }
+
+                // Find top growing and shrinking categories
+                string topGrowingCategory = "None";
+                string topShrinkingCategory = "None";
+
+                if (categoryTrends.Count > 0)
+                {
+                    var categoryGrowthRates = new Dictionary<string, decimal>();
+
+                    foreach (var category in categoryTrends.Keys)
+                    {
+                        var trends = categoryTrends[category];
+                        if (trends.Count >= 2)
+                        {
+                            var firstMonth = trends.First().TotalAmount;
+                            var lastMonth = trends.Last().TotalAmount;
+
+                            if (firstMonth > 0)
+                            {
+                                var growthRate = ((lastMonth - firstMonth) / firstMonth) * 100;
+                                categoryGrowthRates[category] = growthRate;
+                            }
+                        }
+                    }
+
+                    if (categoryGrowthRates.Count > 0)
+                    {
+                        topGrowingCategory = categoryGrowthRates
+                            .OrderByDescending(kvp => kvp.Value)
+                            .FirstOrDefault().Key;
+
+                        topShrinkingCategory = categoryGrowthRates
+                            .OrderBy(kvp => kvp.Value)
+                            .FirstOrDefault().Key;
+                    }
+                }
+
+                var trendSummary = new TrendSummaryDto
+                {
+                    AverageMonthlyExpense = averageMonthlyExpense,
+                    MedianMonthlyExpense = medianMonthlyExpense,
+                    ExpenseGrowthRate = expenseGrowthRate,
+                    TopGrowingCategory = topGrowingCategory,
+                    TopShrinkingCategory = topShrinkingCategory
+                };
+
+                response.Data = new TrendAnalysisDto
+                {
+                    MonthlyTrends = monthlyTrends,
+                    CategoryTrends = categoryTrends,
+                    Summary = trendSummary
+                };
+
+                return response;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error generating expense trend analysis");
+                response.Success = false;
+                response.Message = "Failed to generate expense trend analysis";
+                return response;
+            }
+        }
+
 
         #region Helper Methods
 

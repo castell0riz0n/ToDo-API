@@ -9,6 +9,7 @@
   <ItemGroup>
     <PackageReference Include="AutoMapper" Version="14.0.0" />
     <PackageReference Include="Azure.Identity" Version="1.13.2" />
+    <PackageReference Include="EPPlus" Version="8.0.1" />
     <PackageReference Include="Google.Apis.Gmail.v1" Version="1.68.0.3427" />
     <PackageReference Include="Hangfire" Version="1.8.18" />
     <PackageReference Include="MailKit" Version="4.11.0" />
