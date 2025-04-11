@@ -80,5 +80,8 @@ public static class ApplicationServicesExtensions
         services.AddScoped<IExpenseCategoryService, ExpenseCategoryService>();
         services.AddScoped<IExpenseService, ExpenseService>();
         services.AddScoped<IPaymentMethodService, PaymentMethodService>();
+
+        services.AddScoped<IBudgetAlertSettingsService, BudgetAlertSettingsService>();
+        services.AddScoped<IBudgetAlertService, BudgetAlertService>();
     }
 }
