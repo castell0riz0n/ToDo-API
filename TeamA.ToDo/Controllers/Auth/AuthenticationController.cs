@@ -6,7 +6,7 @@ using TeamA.ToDo.Application.DTOs.General;
 using TeamA.ToDo.Application.Interfaces;
 using TeamA.ToDo.Core.Models;
 
-namespace TeamA.ToDo.Controllers;
+namespace TeamA.ToDo.Host.Controllers.Auth;
 
 // Controllers/AuthController.cs
 [ApiController]

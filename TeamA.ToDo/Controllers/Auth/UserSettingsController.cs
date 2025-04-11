@@ -13,7 +13,7 @@ using TeamA.ToDo.Application.Security;
 using TeamA.ToDo.Core.Models;
 using TeamA.ToDo.Core.Models.General;
 
-namespace TeamA.ToDo.Controllers;
+namespace TeamA.ToDo.Host.Controllers.Auth;
 
 [ApiController]
 [Route("api/user-settings")]

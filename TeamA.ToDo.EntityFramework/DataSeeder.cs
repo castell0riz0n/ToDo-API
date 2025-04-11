@@ -168,7 +168,8 @@ public class DataSeeder
             {
                 new Permission { Name = "ViewSystemLogs", Description = "Can view system logs", Category = "SystemManagement" },
                 new Permission { Name = "ManageSettings", Description = "Can manage application settings", Category = "SystemManagement" },
-                new Permission { Name = "ViewStatistics", Description = "Can view system statistics", Category = "SystemManagement" }
+                new Permission { Name = "ViewStatistics", Description = "Can view system statistics", Category = "SystemManagement" },
+                new Permission { Name = "ViewAllExpenses", Description = "Can view all users' expenses", Category = "SystemManagement" }
             }
         };
 

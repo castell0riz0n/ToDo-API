@@ -4,7 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using TeamA.ToDo.Application.Interfaces;
 using TodoApp.API.DTOs;
 
-namespace TeamA.ToDo.Host.Controllers;
+namespace TeamA.ToDo.Host.Controllers.Todo;
 
 [ApiController]
 [Route("api/tasks/{taskId}/reminders")]

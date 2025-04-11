@@ -6,7 +6,7 @@ using TeamA.ToDo.Application.Interfaces;
 using TeamA.ToDo.Core.Shared.Enums.Todo;
 using TodoApp.API.DTOs;
 
-namespace TeamA.ToDo.Host.Controllers
+namespace TeamA.ToDo.Host.Controllers.Todo
 {
     [ApiController]
     [Route("api/[controller]")]
