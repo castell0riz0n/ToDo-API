@@ -106,6 +106,9 @@ public static class AuthExtensions
 
             options.AddPolicy("TodoOwnerPolicy", policy =>
                 policy.Requirements.Add(new ToDoOwnerRequirement()));
+
+            options.AddPolicy("CanViewAllExpenses", policy =>
+                policy.RequireRole("Admin").RequireClaim("Permission", "ViewAllExpenses"));
         });
 
         // Register authorization handler

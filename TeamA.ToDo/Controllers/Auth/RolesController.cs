@@ -4,7 +4,7 @@ using TeamA.ToDo.Application.DTOs.General;
 using TeamA.ToDo.Application.DTOs.Roles;
 using TeamA.ToDo.Application.Interfaces;
 
-namespace TeamA.ToDo.Controllers;
+namespace TeamA.ToDo.Host.Controllers.Auth;
 
 [ApiController]
 [Route("api/roles")]

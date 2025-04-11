@@ -8,7 +8,7 @@ using TeamA.ToDo.Application.DTOs.Users;
 using TeamA.ToDo.Application.Interfaces;
 using TeamA.ToDo.Core.Models;
 
-namespace TeamA.ToDo.Controllers;
+namespace TeamA.ToDo.Host.Controllers.Auth;
 
 [ApiController]
 [Route("api/users")]
