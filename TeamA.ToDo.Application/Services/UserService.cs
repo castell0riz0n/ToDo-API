@@ -16,6 +16,7 @@ using TeamA.ToDo.Application.DTOs.Users;
 using TeamA.ToDo.Application.Interfaces;
 using TeamA.ToDo.Application.Security;
 using TeamA.ToDo.Core.Models;
+using TeamA.ToDo.Core.Models.Expenses;
 using TeamA.ToDo.Core.Models.General;
 using TeamA.ToDo.EntityFramework;
 using IEmailSender = Microsoft.AspNetCore.Identity.UI.Services.IEmailSender;
@@ -205,6 +206,19 @@ public class UserService : IUserService
 
             // Add user to the User role
             await _userManager.AddToRoleAsync(user, "User");
+
+            // Create default budget alert settings
+            var budgetAlertSettings = new BudgetAlertSetting
+            {
+                Id = Guid.NewGuid(),
+                UserId = user.Id,
+                EnableAlerts = true,
+                ThresholdPercentage = 80, // Alert when 80% of budget is used
+                SendMonthlySummary = true
+            };
+
+            await _context.BudgetAlertSettings.AddAsync(budgetAlertSettings);
+            await _context.SaveChangesAsync();
 
             // Generate email confirmation token
             var emailToken = await _userManager.GenerateEmailConfirmationTokenAsync(user);
