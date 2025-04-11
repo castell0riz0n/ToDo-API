@@ -37,6 +37,8 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<ExpenseTag> ExpenseTags { get; set; }
     public DbSet<ExpenseRecurrence> ExpenseRecurrences { get; set; }
     public DbSet<Budget> Budgets { get; set; }
+    public DbSet<BudgetAlertSetting> BudgetAlertSettings { get; set; }
+
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

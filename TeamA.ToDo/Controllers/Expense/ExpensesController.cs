@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TeamA.ToDo.Application.DTOs.Expenses;
+using TeamA.ToDo.Application.DTOs.Expenses.Reporting;
 using TeamA.ToDo.Application.DTOs.General;
 using TeamA.ToDo.Application.Interfaces.Expenses;
 
@@ -141,6 +142,68 @@ public class ExpensesController : ControllerBase
     public async Task<IActionResult> GetAllExpenses([FromQuery] ExpenseFilterDto filter)
     {
         var response = await _expenseService.GetAllExpensesAsync(filter);
+        return Ok(response);
+    }
+
+    // Add to ExpensesController
+    [HttpGet("reports/monthly")]
+    [ProducesResponseType(typeof(ServiceResponse<List<MonthlyExpenseSummaryDto>>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetMonthlyExpenseReport([FromQuery] int year)
+    {
+        if (year <= 0)
+        {
+            year = DateTime.UtcNow.Year; // Default to current year
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var response = await _expenseService.GetMonthlyExpenseReportAsync(userId, year);
+        return Ok(response);
+    }
+
+    [HttpGet("reports/yearly-comparison")]
+    [ProducesResponseType(typeof(ServiceResponse<YearlyComparisonReportDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetYearlyComparisonReport([FromQuery] int year1, [FromQuery] int year2)
+    {
+        if (year1 <= 0 || year2 <= 0)
+        {
+            return BadRequest(new ServiceResponse<YearlyComparisonReportDto>
+            {
+                Success = false,
+                Message = "Both years must be valid"
+            });
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var response = await _expenseService.GetYearlyComparisonReportAsync(userId, year1, year2);
+        return Ok(response);
+    }
+
+    [HttpGet("reports/category-breakdown")]
+    [ProducesResponseType(typeof(ServiceResponse<CategoryBreakdownReportDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetCategoryBreakdownReport(
+        [FromQuery] DateTime? startDate,
+        [FromQuery] DateTime? endDate)
+    {
+        var today = DateTime.UtcNow.Date;
+        var start = startDate ?? today.AddMonths(-1);
+        var end = endDate ?? today;
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var response = await _expenseService.GetCategoryBreakdownReportAsync(userId, start, end);
+        return Ok(response);
+    }
+
+    [HttpGet("reports/trend-analysis")]
+    [ProducesResponseType(typeof(ServiceResponse<TrendAnalysisDto>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> GetExpenseTrendAnalysis([FromQuery] int months = 6)
+    {
+        if (months <= 0 || months > 60) // Limit to reasonable range
+        {
+            months = 6; // Default to 6 months
+        }
+
+        var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+        var response = await _expenseService.GetExpenseTrendAnalysisAsync(userId, months);
         return Ok(response);
     }
 }
