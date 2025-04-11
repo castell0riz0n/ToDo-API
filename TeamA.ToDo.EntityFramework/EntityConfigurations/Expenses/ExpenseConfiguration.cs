@@ -47,6 +47,7 @@ namespace TeamA.ToDo.EntityFramework.EntityConfigurations.Expenses
                 .WithOne(r => r.Expense)
                 .HasForeignKey<ExpenseRecurrence>(r => r.ExpenseId)
                 .OnDelete(DeleteBehavior.Cascade);
+
         }
     }
 }

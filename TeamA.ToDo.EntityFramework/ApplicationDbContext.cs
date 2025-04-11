@@ -107,5 +107,27 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
         builder.ApplyConfiguration(new ExpenseTagConfiguration());
         builder.ApplyConfiguration(new ExpenseRecurrenceConfiguration());
         builder.ApplyConfiguration(new BudgetConfiguration());
+        
+        // Configure the many-to-many relationship with proper delete behavior
+        builder.Entity<Expense>()
+            .HasMany(e => e.Tags)
+            .WithMany(t => t.Expenses)
+            .UsingEntity(join => join.ToTable("ExpenseExpenseTag"));
+        
+        // Configure the join table to avoid multiple cascade paths
+        builder.Entity("ExpenseExpenseTag", b =>
+        {
+            b.HasKey("ExpensesId", "TagsId");
+        
+            b.HasOne("TeamA.ToDo.Core.Models.Expenses.Expense", null)
+                .WithMany()
+                .HasForeignKey("ExpensesId")
+                .OnDelete(DeleteBehavior.Cascade);
+            
+            b.HasOne("TeamA.ToDo.Core.Models.Expenses.ExpenseTag", null)
+                .WithMany()
+                .HasForeignKey("TagsId")
+                .OnDelete(DeleteBehavior.NoAction);
+        });
     }
 }

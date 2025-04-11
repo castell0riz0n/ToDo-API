@@ -35,6 +35,6 @@ public class BudgetConfiguration : IEntityTypeConfiguration<Budget>
         builder.HasOne(b => b.Category)
             .WithMany(c => c.Budgets)
             .HasForeignKey(b => b.CategoryId)
-            .OnDelete(DeleteBehavior.SetNull);  // Don't require a category
+            .OnDelete(DeleteBehavior.NoAction);  // Use NoAction to avoid cycles or multiple cascade paths
     }
 }

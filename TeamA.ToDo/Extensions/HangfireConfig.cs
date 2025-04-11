@@ -2,7 +2,9 @@
 using Hangfire.Dashboard;
 using Hangfire.SqlServer;
 using TeamA.ToDo.Application.Interfaces;
+using TeamA.ToDo.Application.Interfaces.Expenses;
 using TeamA.ToDo.Application.Services;
+using TeamA.ToDo.Application.Services.Expenses;
 
 namespace TeamA.ToDo.Host.Extensions
 {
@@ -32,6 +34,7 @@ namespace TeamA.ToDo.Host.Extensions
 
             // Register services
             services.AddScoped<IRecurringTaskService, RecurringTaskService>();
+            services.AddScoped<IRecurringExpenseService, RecurringExpenseService>();
             services.AddScoped<IApplicationEmailSender, EmailService>();
 
             return services;
@@ -49,6 +52,36 @@ namespace TeamA.ToDo.Host.Extensions
             app.UseHangfireDashboard("/hangfire", dashboardOptions);
 
             return app;
+        }
+
+        public static void RegisterRecurringJobs(IServiceProvider serviceProvider)
+        {
+            // Existing jobs from BackgroundJobSetup
+            RecurringJob.AddOrUpdate<TaskNotificationJob>(
+                "check-overdue-tasks",
+                job => job.CheckForOverdueTasks(),
+                Cron.Daily);
+
+            RecurringJob.AddOrUpdate<TaskNotificationJob>(
+                "check-tasks-due-today",
+                job => job.CheckForTasksDueToday(),
+                "0 7 * * *");
+
+            RecurringJob.AddOrUpdate<TaskRecurrenceJob>(
+                "generate-upcoming-recurring-tasks",
+                job => job.GenerateUpcomingRecurringTasks(),
+                Cron.Weekly);
+
+            RecurringJob.AddOrUpdate<TaskCleanupJob>(
+                "clean-up-old-completed-tasks",
+                job => job.CleanUpOldCompletedTasks(90),
+                "0 1 1 * *");
+
+            // Add new recurring expense job
+            RecurringJob.AddOrUpdate<IRecurringExpenseService>(
+                "process-recurring-expenses",
+                service => service.ProcessRecurringExpensesAsync(),
+                Cron.Daily(1)); // Run at 1 AM daily
         }
     }
 
