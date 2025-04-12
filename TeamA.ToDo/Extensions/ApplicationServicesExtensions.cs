@@ -9,9 +9,11 @@ using TeamA.ToDo.Application.Email;
 using TeamA.ToDo.Application.Helpers;
 using TeamA.ToDo.Application.Interfaces;
 using TeamA.ToDo.Application.Interfaces.Expenses;
+using TeamA.ToDo.Application.Interfaces.FeatureManagement;
 using TeamA.ToDo.Application.Security;
 using TeamA.ToDo.Application.Services;
 using TeamA.ToDo.Application.Services.Expenses;
+using TeamA.ToDo.Application.Services.FeatureManagement;
 using TeamA.ToDo.Core.Models;
 using TeamA.ToDo.Core.Models.General;
 
@@ -83,5 +85,8 @@ public static class ApplicationServicesExtensions
 
         services.AddScoped<IBudgetAlertSettingsService, BudgetAlertSettingsService>();
         services.AddScoped<IBudgetAlertService, BudgetAlertService>();
+
+        // Register Feature Management Service
+        services.AddScoped<IFeatureManagementService, FeatureManagementService>();
     }
 }

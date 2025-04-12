@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TeamA.ToDo.Application.DTOs.General;
+using TeamA.ToDo.Application.Filters;
 using TeamA.ToDo.Application.Interfaces.Expenses;
 
 namespace TeamA.ToDo.Host.Controllers.Expense;
@@ -9,6 +10,7 @@ namespace TeamA.ToDo.Host.Controllers.Expense;
 [ApiController]
 [Route("api/expense-exports")]
 [Authorize]
+[FeatureRequirement("ExpenseApp")]
 public class ExpenseExportController : ControllerBase
 {
     private readonly IExpenseExportService _exportService;

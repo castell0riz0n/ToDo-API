@@ -2,6 +2,7 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TeamA.ToDo.Application.DTOs.General;
+using TeamA.ToDo.Application.Filters;
 using TeamA.ToDo.Application.Interfaces;
 using TeamA.ToDo.Core.Shared.Enums.Todo;
 using TodoApp.API.DTOs;
@@ -11,6 +12,7 @@ namespace TeamA.ToDo.Host.Controllers.Todo
     [ApiController]
     [Route("api/[controller]")]
     [Authorize]
+    [FeatureRequirement("TodoApp")]
     public class TasksController : ControllerBase
     {
         private readonly ITodoTaskService _todoTaskService;

@@ -6,6 +6,7 @@ using Microsoft.Identity.Client;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
 using TeamA.ToDo.Core.Models;
+using TeamA.ToDo.Core.Models.FeatureManagement;
 using TeamA.ToDo.Core.Models.General;
 using TeamA.ToDo.EntityFramework;
 
@@ -49,6 +50,9 @@ public class DataSeeder
 
             try
             {
+                // Seed feature definitions
+                await SeedFeatureDefinitionsAsync();
+
                 // Seed roles
                 await SeedRolesAsync();
 
@@ -63,6 +67,8 @@ public class DataSeeder
                 {
                     await SeedSampleUsersAsync();
                 }
+
+                await SeedFeatureRolesAsync();
 
                 // Commit transaction if everything succeeded
                 await transaction.CommitAsync();
@@ -344,5 +350,118 @@ public class DataSeeder
         }
 
         _logger.LogInformation("Sample users created successfully.");
+    }
+
+    private async Task SeedFeatureDefinitionsAsync()
+    {
+        // Check if we already have feature definitions
+        if (await _context.FeatureDefinitions.AnyAsync())
+            return;
+
+        // Create our standard feature definitions
+        var features = new List<FeatureDefinition>
+        {
+            new FeatureDefinition
+            {
+                Id = Guid.NewGuid(),
+                Name = "TodoApp",
+                Description = "Todo task management features",
+                EnabledByDefault = true,
+                CreatedAt = DateTime.UtcNow
+            },
+            new FeatureDefinition
+            {
+                Id = Guid.NewGuid(),
+                Name = "ExpenseApp",
+                Description = "Expense tracking and budgeting features",
+                EnabledByDefault = true,
+                CreatedAt = DateTime.UtcNow
+            }
+        };
+
+        await _context.FeatureDefinitions.AddRangeAsync(features);
+        await _context.SaveChangesAsync();
+
+        _logger.LogInformation("Feature definitions seeded successfully");
+    }
+
+    private async Task SeedFeatureRolesAsync()
+    {
+        // Get TodoApp feature
+        var todoFeature = await _context.FeatureDefinitions
+            .FirstOrDefaultAsync(f => f.Name == "TodoApp");
+
+        // Get ExpenseApp feature
+        var expenseFeature = await _context.FeatureDefinitions
+            .FirstOrDefaultAsync(f => f.Name == "ExpenseApp");
+
+        if (todoFeature == null || expenseFeature == null)
+            return;
+
+        // Get standard roles
+        var adminRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "Admin");
+        var userRole = await _context.Roles.FirstOrDefaultAsync(r => r.Name == "User");
+
+        if (adminRole == null || userRole == null)
+            return;
+
+        // Set up default role permissions
+
+        // Admin has access to all features
+        if (!await _context.RoleFeatureAccess.AnyAsync(rf =>
+            rf.FeatureDefinitionId == todoFeature.Id && rf.RoleId == adminRole.Id))
+        {
+            await _context.RoleFeatureAccess.AddAsync(new RoleFeatureAccess
+            {
+                Id = Guid.NewGuid(),
+                FeatureDefinitionId = todoFeature.Id,
+                RoleId = adminRole.Id,
+                IsEnabled = true,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
+        if (!await _context.RoleFeatureAccess.AnyAsync(rf =>
+            rf.FeatureDefinitionId == expenseFeature.Id && rf.RoleId == adminRole.Id))
+        {
+            await _context.RoleFeatureAccess.AddAsync(new RoleFeatureAccess
+            {
+                Id = Guid.NewGuid(),
+                FeatureDefinitionId = expenseFeature.Id,
+                RoleId = adminRole.Id,
+                IsEnabled = true,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
+        // Regular users also have access to all features by default
+        if (!await _context.RoleFeatureAccess.AnyAsync(rf =>
+            rf.FeatureDefinitionId == todoFeature.Id && rf.RoleId == userRole.Id))
+        {
+            await _context.RoleFeatureAccess.AddAsync(new RoleFeatureAccess
+            {
+                Id = Guid.NewGuid(),
+                FeatureDefinitionId = todoFeature.Id,
+                RoleId = userRole.Id,
+                IsEnabled = true,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
+        if (!await _context.RoleFeatureAccess.AnyAsync(rf =>
+            rf.FeatureDefinitionId == expenseFeature.Id && rf.RoleId == userRole.Id))
+        {
+            await _context.RoleFeatureAccess.AddAsync(new RoleFeatureAccess
+            {
+                Id = Guid.NewGuid(),
+                FeatureDefinitionId = expenseFeature.Id,
+                RoleId = userRole.Id,
+                IsEnabled = true,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
+        await _context.SaveChangesAsync();
+        _logger.LogInformation("Feature roles seeded successfully");
     }
 }

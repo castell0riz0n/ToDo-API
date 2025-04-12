@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using TeamA.ToDo.Application.Filters;
 using TeamA.ToDo.Application.Interfaces;
 using TodoApp.API.DTOs;
 
@@ -9,6 +10,7 @@ namespace TeamA.ToDo.Host.Controllers.Todo;
 [ApiController]
 [Route("api/tasks/{taskId}/notes")]
 [Authorize]
+[FeatureRequirement("TodoApp")]
 public class NotesController : ControllerBase
 {
     private readonly INoteService _noteService;

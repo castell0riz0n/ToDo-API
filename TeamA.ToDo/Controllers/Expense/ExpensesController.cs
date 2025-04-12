@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Mvc;
 using TeamA.ToDo.Application.DTOs.Expenses;
 using TeamA.ToDo.Application.DTOs.Expenses.Reporting;
 using TeamA.ToDo.Application.DTOs.General;
+using TeamA.ToDo.Application.Filters;
 using TeamA.ToDo.Application.Interfaces.Expenses;
 
 namespace TeamA.ToDo.Host.Controllers.Expense;
@@ -11,6 +12,7 @@ namespace TeamA.ToDo.Host.Controllers.Expense;
 [ApiController]
 [Route("api/[controller]")]
 [Authorize]
+[FeatureRequirement("ExpenseApp")]
 public class ExpensesController : ControllerBase
 {
     private readonly IExpenseService _expenseService;
