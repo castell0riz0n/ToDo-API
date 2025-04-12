@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using TeamA.ToDo.Application.DTOs.Expenses;
 using TeamA.ToDo.Application.DTOs.General;
+using TeamA.ToDo.Application.Filters;
 using TeamA.ToDo.Application.Interfaces.Expenses;
 
 namespace TeamA.ToDo.Host.Controllers.Expense.TeamA.ToDo.Host.Controllers.Expense;
@@ -10,6 +11,7 @@ namespace TeamA.ToDo.Host.Controllers.Expense.TeamA.ToDo.Host.Controllers.Expens
 [ApiController]
 [Route("api/budget-alert-settings")]
 [Authorize]
+[FeatureRequirement("ExpenseApp")]
 public class BudgetAlertSettingsController : ControllerBase
 {
     private readonly IBudgetAlertSettingsService _budgetAlertSettingsService;

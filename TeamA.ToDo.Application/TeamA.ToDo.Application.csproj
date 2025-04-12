@@ -28,4 +28,9 @@
     <ProjectReference Include="..\TeamA.ToDo.EntityFramework\TeamA.ToDo.EntityFramework.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Interfaces\FeatureManagement\" />
+    <Folder Include="Services\FeatureManagement\" />
+  </ItemGroup>
+
 </Project>

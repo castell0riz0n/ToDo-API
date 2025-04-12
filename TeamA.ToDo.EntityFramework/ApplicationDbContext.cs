@@ -2,9 +2,11 @@
 using Microsoft.EntityFrameworkCore;
 using TeamA.ToDo.Core.Models;
 using TeamA.ToDo.Core.Models.Expenses;
+using TeamA.ToDo.Core.Models.FeatureManagement;
 using TeamA.ToDo.Core.Models.Todo;
 using TeamA.ToDo.EntityFramework.EntityConfigurations;
 using TeamA.ToDo.EntityFramework.EntityConfigurations.Expenses;
+using TeamA.ToDo.EntityFramework.EntityConfigurations.FeatureManagement;
 using TeamA.ToDo.EntityFramework.EntityConfigurations.Todo;
 
 namespace TeamA.ToDo.EntityFramework;
@@ -38,6 +40,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
     public DbSet<ExpenseRecurrence> ExpenseRecurrences { get; set; }
     public DbSet<Budget> Budgets { get; set; }
     public DbSet<BudgetAlertSetting> BudgetAlertSettings { get; set; }
+
+    // Feature Management
+    public DbSet<FeatureDefinition> FeatureDefinitions { get; set; }
+    public DbSet<UserFeatureFlag> UserFeatureFlags { get; set; }
+    public DbSet<RoleFeatureAccess> RoleFeatureAccess { get; set; }
 
 
     protected override void OnModelCreating(ModelBuilder builder)
@@ -131,5 +138,11 @@ public class ApplicationDbContext : IdentityDbContext<ApplicationUser, Applicati
                 .HasForeignKey("TagsId")
                 .OnDelete(DeleteBehavior.NoAction);
         });
+
+        // Feature Management
+        builder.ApplyConfiguration(new FeatureDefinitionConfiguration());
+        builder.ApplyConfiguration(new UserFeatureFlagConfiguration());
+        builder.ApplyConfiguration(new RoleFeatureAccessConfiguration());
+
     }
 }
