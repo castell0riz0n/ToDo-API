@@ -1,10 +1,10 @@
-﻿// Data/DataSeeder.cs
-using Microsoft.AspNetCore.Identity;
+﻿using Microsoft.AspNetCore.Identity;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using Microsoft.Identity.Client;
 using System.Security.Claims;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Configuration;
+using TeamA.ToDo.Application.Configuration;
 using TeamA.ToDo.Core.Models;
 using TeamA.ToDo.Core.Models.FeatureManagement;
 using TeamA.ToDo.Core.Models.General;
@@ -17,19 +17,22 @@ public class DataSeeder
     private readonly ApplicationDbContext _context;
     private readonly ILogger<DataSeeder> _logger;
     private readonly IOptions<AppConfig> _appConfig;
+    private readonly IConfiguration _configuration;
 
     public DataSeeder(
         UserManager<ApplicationUser> userManager,
         RoleManager<ApplicationRole> roleManager,
         ApplicationDbContext context,
         ILogger<DataSeeder> logger,
-        IOptions<AppConfig> appConfig)
+        IOptions<AppConfig> appConfig,
+        IConfiguration configuration)
     {
         _userManager = userManager;
         _roleManager = roleManager;
         _context = context;
         _logger = logger;
         _appConfig = appConfig;
+        _configuration = configuration;
     }
 
     public async Task SeedDataAsync()
@@ -279,8 +282,18 @@ public class DataSeeder
     {
         _logger.LogInformation("Seeding admin user...");
 
-        var adminEmail = _appConfig.Value.DefaultAdminEmail ?? "admin@todo.com";
-        var adminPassword = _appConfig.Value.DefaultAdminPassword ?? "@likh0rs4nD"; // Should be changed immediately in production
+        // Get admin settings from environment variables or generate secure password
+        var adminSettings = AdminConfiguration.GetAdminSettings(_configuration);
+        var adminEmail = adminSettings.DefaultAdminEmail;
+        var adminPassword = adminSettings.DefaultAdminPassword;
+
+        // Check if admin already exists
+        var existingAdmin = await _userManager.FindByEmailAsync(adminEmail);
+        if (existingAdmin != null)
+        {
+            _logger.LogInformation("Admin user already exists. Skipping admin creation.");
+            return;
+        }
 
         var adminUser = new ApplicationUser
         {
@@ -306,23 +319,51 @@ public class DataSeeder
         // Assign admin user to Admin role
         await _userManager.AddToRoleAsync(adminUser, "Admin");
 
-        _logger.LogInformation("Admin user created successfully.");
+        // Log the admin credentials if they were generated
+        if (adminSettings.IsGeneratedPassword)
+        {
+            _logger.LogWarning("================== IMPORTANT ==================");
+            _logger.LogWarning($"Admin user created with email: {adminEmail}");
+            _logger.LogWarning($"Generated admin password: {adminPassword}");
+            _logger.LogWarning("Please change this password immediately after first login!");
+            _logger.LogWarning("To set a custom admin password, use the ADMIN_PASSWORD environment variable.");
+            _logger.LogWarning("==============================================");
+        }
+        else
+        {
+            _logger.LogInformation($"Admin user created successfully with email: {adminEmail}");
+        }
     }
 
     private async Task SeedSampleUsersAsync()
     {
         _logger.LogInformation("Seeding sample users...");
 
+        // Generate secure passwords for sample users
+        var userPassword = AdminConfiguration.GenerateSecurePassword();
+        var managerPassword = AdminConfiguration.GenerateSecurePassword();
+        var readOnlyPassword = AdminConfiguration.GenerateSecurePassword();
+
         // Sample users with different roles
         var sampleUsers = new List<(string Email, string FirstName, string LastName, DateTime DOB, string Role, string Password)>
         {
-            ("user@todo.com", "Regular", "User", new DateTime(1985, 5, 15), "User", "@likh0rs4nD"),
-            ("manager@todo.com", "Team", "Manager", new DateTime(1979, 8, 22), "Manager", "@likh0rs4nD"),
-            ("readonly@todo.com", "View", "Only", new DateTime(1990, 3, 10), "ReadOnly", "@likh0rs4nD")
+            ("user@todo.com", "Regular", "User", new DateTime(1985, 5, 15), "User", userPassword),
+            ("manager@todo.com", "Team", "Manager", new DateTime(1979, 8, 22), "Manager", managerPassword),
+            ("readonly@todo.com", "View", "Only", new DateTime(1990, 3, 10), "ReadOnly", readOnlyPassword)
         };
 
+        _logger.LogWarning("================== SAMPLE USERS ==================");
+        
         foreach (var (email, firstName, lastName, dob, role, password) in sampleUsers)
         {
+            // Check if user already exists
+            var existingUser = await _userManager.FindByEmailAsync(email);
+            if (existingUser != null)
+            {
+                _logger.LogInformation($"User {email} already exists. Skipping.");
+                continue;
+            }
+
             var user = new ApplicationUser
             {
                 UserName = email,
@@ -347,8 +388,12 @@ public class DataSeeder
 
             // Assign user to role
             await _userManager.AddToRoleAsync(user, role);
+            
+            _logger.LogWarning($"Created sample user - Email: {email}, Password: {password}");
         }
 
+        _logger.LogWarning("Please change these passwords immediately!");
+        _logger.LogWarning("=================================================");
         _logger.LogInformation("Sample users created successfully.");
     }
 

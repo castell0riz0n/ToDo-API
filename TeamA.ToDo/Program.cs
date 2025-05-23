@@ -52,6 +52,16 @@ public class Program
 
     private static void ConfigureServices(IServiceCollection services, IConfiguration configuration, IWebHostEnvironment environment)
     {
+        // Configure HSTS
+        services.AddHsts(options =>
+        {
+            options.Preload = true;
+            options.IncludeSubDomains = true;
+            options.MaxAge = TimeSpan.FromDays(365);
+            options.ExcludedHosts.Add("localhost");
+            options.ExcludedHosts.Add("127.0.0.1");
+        });
+
         // Add core application services
         services.AddApplicationServices(configuration);
 

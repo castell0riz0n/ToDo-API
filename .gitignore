@@ -400,3 +400,35 @@ FodyWeavers.xsd
 *.sln.iml
 .idea
 /.idea
+
+# ===== Security Specific =====
+# Never commit production configs with real values
+appsettings.Production.json
+appsettings.Staging.json
+appsettings.*.json
+!appsettings.json
+!appsettings.Development.json
+
+# SSL Certificates and Keys
+*.pfx
+*.key
+*.pem
+*.crt
+*.cer
+*.p12
+
+# Environment files
+.env
+.env.local
+.env.production
+.env.*
+
+# Secrets
+secrets.json
+secrets.config
+*.secrets
+
+# Database backups and dumps
+*.sql
+*.bak
+*.dump
