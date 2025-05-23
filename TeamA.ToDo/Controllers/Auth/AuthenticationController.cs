@@ -1,6 +1,7 @@
 ﻿using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using TeamA.ToDo.Application.DTOs.Auth;
 using TeamA.ToDo.Application.DTOs.General;
 using TeamA.ToDo.Application.Interfaces;
@@ -33,6 +34,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("register")]
+    [EnableRateLimiting("RegistrationLimit")]
     [ProducesResponseType(typeof(ServiceResponse<string>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ServiceResponse<string>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Register([FromBody] UserRegistrationDto model)
@@ -59,6 +61,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("login")]
+    [EnableRateLimiting("AuthLimit")]
     [ProducesResponseType(typeof(ServiceResponse<AuthResponseDto>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ServiceResponse<AuthResponseDto>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> Login([FromBody] LoginDto model)
@@ -212,6 +215,7 @@ public class AuthController : ControllerBase
     }
 
     [HttpPost("forgot-password")]
+    [EnableRateLimiting("PasswordResetLimit")]
     [ProducesResponseType(typeof(ServiceResponse<string>), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(ServiceResponse<string>), StatusCodes.Status400BadRequest)]
     public async Task<IActionResult> ForgotPassword([FromBody] ForgotPasswordDto model)

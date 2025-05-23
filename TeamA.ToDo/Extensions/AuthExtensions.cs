@@ -43,6 +43,16 @@ public static class AuthExtensions
         })
             .AddJwtBearer(options =>
             {
+                // Get JWT secret from environment variable or configuration
+                var jwtSecret = Environment.GetEnvironmentVariable("JWT_SECRET") ?? 
+                               configuration["JwtSettings:Secret"];
+                
+                if (string.IsNullOrEmpty(jwtSecret))
+                {
+                    throw new InvalidOperationException(
+                        "JWT Secret is not configured. Please set the JWT_SECRET environment variable.");
+                }
+
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidateIssuer = true,
@@ -52,7 +62,7 @@ public static class AuthExtensions
                     ValidIssuer = configuration["JwtSettings:Issuer"],
                     ValidAudience = configuration["JwtSettings:Audience"],
                     IssuerSigningKey = new SymmetricSecurityKey(
-                        Encoding.UTF8.GetBytes(configuration["JwtSettings:Secret"])),
+                        Encoding.UTF8.GetBytes(jwtSecret)),
                     ClockSkew = TimeSpan.Zero // Remove delay of token when expire
                 };
 

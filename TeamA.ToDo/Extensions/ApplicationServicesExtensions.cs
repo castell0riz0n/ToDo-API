@@ -3,6 +3,7 @@ using FluentValidation.AspNetCore;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using TeamA.ToDo.Application;
+using TeamA.ToDo.Application.Configuration;
 using TeamA.ToDo.Application.DTOs.Auth;
 using TeamA.ToDo.Application.DTOs.Email;
 using TeamA.ToDo.Application.Email;
@@ -26,7 +27,16 @@ public static class ApplicationServicesExtensions
         // Register configurations
         services.Configure<EmailSettings>(configuration.GetSection("EmailSettings"));
         services.Configure<AppConfig>(configuration.GetSection("AppConfig"));
-        services.Configure<JwtSettings>(configuration.GetSection("JwtSettings"));
+        
+        // Configure JWT settings with environment variable support
+        var jwtSettings = JwtConfiguration.GetJwtSettings(configuration);
+        services.Configure<JwtSettings>(options =>
+        {
+            options.Secret = jwtSettings.Secret;
+            options.Issuer = jwtSettings.Issuer;
+            options.Audience = jwtSettings.Audience;
+            options.ExpiryMinutes = jwtSettings.ExpiryMinutes;
+        });
 
         // Register AutoMapper
         services.AddAutoMapper(typeof(MappingProfile));
